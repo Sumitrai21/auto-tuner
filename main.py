@@ -64,6 +64,7 @@ image_weights = False
 quad = False
 epochs = 2
 device = 'cpu'
+linear_lr = False
 
 trainloader, dataset = create_dataloader(train_pth,imgsz,batch_size,gs,single_cls,hyp=hyp,
                         augment=True,cache=chache_images,rect=rect,rank=RANK,
@@ -91,7 +92,7 @@ if adam:
 else:
     optimizer = optim.SGD(pg0, lr=hyp['lr0'], momentum=hyp['momentum'], nesterov=True)
 
-if opt.linear_lr:
+if linear_lr:
     lf = lambda x: (1 - x / (epochs - 1)) * (1.0 - hyp['lrf']) + hyp['lrf']  # linear
 else:
     lf = one_cycle(1, hyp['lrf'], epochs)  # cosine 1->hyp['lrf']
@@ -107,6 +108,8 @@ start_epoch = 0
 scheduler.last_epoch = start_epoch - 1
 scaler = amp.Gradscaler(enabled=cuda)
 compute_loss = ComputeLoss(model)
+
+#training loop
 
 for epoch in range(start_epoch,epochs):
     model.train()
@@ -169,3 +172,30 @@ for epoch in range(start_epoch,epochs):
 
 
 # save the results
+
+
+
+
+
+cfg = liteconfig.Config('config.ini')
+
+ML_FLOW_URL = cfg.Mlflow.mlflow_url
+mlflow.set_tracking_uri(ML_FLOW_URL)
+
+def load_model():
+    model_name = cfg.Mlflow.model_name
+    model_version = cfg.Mlflow.model_version
+    if os.path.isfile(f'{cfg.Detection.weights}.pt'):
+        pass
+
+    else:
+        model = mlflow.pytorch.load_model(model_uri=f"models:/{model_name}/{model_version}")
+        torch.save(model,f'{cfg.Detection.weights_savename}.pt')
+
+
+    model = torch.hub.load(os.getcwd(), 'custom', path=f'{cfg.Detection.weights}.pt', source='local', force_reload = True)
+    print('model loaded')
+    return model
+
+
+print(load_model())
