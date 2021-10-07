@@ -23,7 +23,7 @@ class GetModel():
 
     def load_model(self):
         #loads the model from mlflow server
-        if os.path.isfile(f'{cfg.Detection.weights}.pt'):
+        if os.path.isfile(f'{self.cfg.Detection.weights}.pt'):
             pass
 
         else:

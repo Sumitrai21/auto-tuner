@@ -77,12 +77,16 @@ def run():
     if check_data.check_new_data():
         print('HERE')
         print('New data. Data will be added to the training folder')
+        
         dataloader = CreateDataloader(cfg)
         trainloader,dataset = dataloader.get_dataloader()
         print('Data loaded Successfully')
-        model = load_model(cfg)
-        print(model)
-        trainer = Train(cfg,trainloader=trainloader,model=model,RANK=RANK)
+        
+        model = GetModel(cfg)
+        model.load_model()
+        print('Model Loaded')
+        print(model.model)
+        trainer = Train(cfg,trainloader=trainloader,model=model.model,RANK=RANK)
         trainer.begin_training()
 
     else:
