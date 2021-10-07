@@ -7,12 +7,13 @@ import liteconfig
 
 from pathlib import Path
 
-cfg = liteconfig.Config('config.ini')
+#cfg = liteconfig.Config('config.ini')
 
-ML_FLOW_URL = cfg.Mlflow.mlflow_url
-mlflow.set_tracking_uri(ML_FLOW_URL)
 
-def load_model():
+
+def load_model(cfg):
+    ML_FLOW_URL = cfg.Mlflow.mlflow_url
+    mlflow.set_tracking_uri(ML_FLOW_URL)
     model_name = cfg.Mlflow.model_name
     model_version = cfg.Mlflow.model_version
     if os.path.isfile(f'{cfg.Detection.weights}.pt'):

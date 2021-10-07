@@ -27,7 +27,7 @@ from tqdm import tqdm
 FILE = Path(__file__).absolute()
 sys.path.append(FILE.parents[0].as_posix())  # add yolov5/ to path
 
-import val  # for end-of-epoch mAP
+#import val  # for end-of-epoch mAP
 from models.experimental import attempt_load
 from models.yolo import Model
 from utils.autoanchor import check_anchors
@@ -45,7 +45,8 @@ from utils.metrics import fitness
 
 from get_model import GetModel
 from dataset_loader import CreateDataset,CreateDataloader
-
+from train import Train
+from models import load_model
 
 
 RANK = int(os.getenv('RANK', -1))
@@ -58,7 +59,14 @@ def run():
         print('New data. Data will be added to the training folder')
         dataloader = CreateDataloader(cfg,RANK)
         trainloader,dataset = dataloader.get_dataloader()
-        
+        model = load_model(cfg)
+        trainer = Train(cfg,trainloader=trainloader,model=model,RANK=RANK)
+        trainer.begin_training()
 
     else:
         print("no new data found. Terminating the process")
+
+
+
+if __name__ == '__main__':
+    run()
