@@ -9,6 +9,9 @@ from copy import deepcopy
 from pathlib import Path
 from threading import Thread
 import liteconfig
+import mlflow
+import mlflow.pytorch
+
 
 import math
 import numpy as np
@@ -27,7 +30,7 @@ from tqdm import tqdm
 FILE = Path(__file__).absolute()
 sys.path.append(FILE.parents[0].as_posix())  # add yolov5/ to path
 
-#import val  # for end-of-epoch mAP
+
 from models.experimental import attempt_load
 from models.yolo import Model
 from utils.autoanchor import check_anchors
@@ -35,31 +38,50 @@ from utils.datasets import create_dataloader
 from utils.general import labels_to_class_weights, increment_path, labels_to_image_weights, init_seeds, \
     strip_optimizer, get_latest_run, check_dataset, check_file, check_git_status, check_img_size, \
     check_requirements, print_mutation, set_logging, one_cycle, colorstr
-from utils.google_utils import attempt_download
+
 from utils.loss import ComputeLoss
-from utils.plots import plot_images, plot_labels, plot_results, plot_evolution
 from utils.torch_utils import ModelEMA, select_device, intersect_dicts, torch_distributed_zero_first, de_parallel
-from utils.wandb_logging.wandb_utils import WandbLogger, check_wandb_resume
 from utils.metrics import fitness
 
 
 from get_model import GetModel
 from dataset_loader import CreateDataset,CreateDataloader
 from train import Train
-from models import load_model
+#from models import load_model
 
 
 RANK = int(os.getenv('RANK', -1))
 
+def load_model(cfg):
+    ML_FLOW_URL = cfg.Mlflow.mlflow_url
+    mlflow.set_tracking_uri(ML_FLOW_URL)
+    model_name = cfg.Mlflow.model_name
+    model_version = cfg.Mlflow.model_version
+    if os.path.isfile(f'{cfg.Detection.weights}.pt'):
+        pass
+
+    else:
+        model = mlflow.pytorch.load_model(model_uri=f"models:/{model_name}/{model_version}")
+        torch.save(model,f'{cfg.Detection.weights_savename}.pt')
+
+
+    model = torch.hub.load(os.getcwd(), 'custom', path=f'{cfg.Detection.weights}.pt', source='local', force_reload = True)
+    print('model loaded')
+    return model
+
 def run():
+    print('Inside runner file')
     cfg = liteconfig.Config('config.ini')
     #check new data
     check_data = CreateDataset(cfg)
     if check_data.check_new_data():
+        print('HERE')
         print('New data. Data will be added to the training folder')
-        dataloader = CreateDataloader(cfg,RANK)
+        dataloader = CreateDataloader(cfg)
         trainloader,dataset = dataloader.get_dataloader()
+        print('Data loaded Successfully')
         model = load_model(cfg)
+        print(model)
         trainer = Train(cfg,trainloader=trainloader,model=model,RANK=RANK)
         trainer.begin_training()
 

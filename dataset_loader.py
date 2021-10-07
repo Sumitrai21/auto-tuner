@@ -1,5 +1,6 @@
 import os
 import shutil
+#from runner import RANK
 from utils.datasets import create_dataloader
 from utils.general import colorstr
 
@@ -47,14 +48,20 @@ class CreateDataset():
 
 
 class CreateDataloader():
-    def __init__(self,cfg,RANK):
+    def __init__(self,cfg):
         self.cfg = cfg
-        self.RANK = RANK
+        self.RANK = int(os.getenv('RANK', -1))
     
     def get_dataloader(self):
-        trainloader,dataset = create_dataloader(self.cfg.Paths.train_pth,self.cfg.Training.imgsz,self.cfg.Training.batch_size,
-                                self.cfg.Training.gs,self.cgf.Training.single_cls,hyp=self.cfg.Training.hyp,augment=self.cfg.Training.augment,
-                                cache=self.cfg.Training.chache_images,rect=self.cfg.Training.rect,rank=self.RANK, workers=self.cfg.Training.workers,
-                                image_weights=self.cfg.Training.image_weights,quad=self.cfg.Training.quad,prefix=colorstr('train: '))
+        trainloader,dataset = create_dataloader('dataset/train',312,32,
+                                32,True,hyp='data/hyps/hyp.scratch.yaml',augment=self.cfg.Training.augment,
+                                cache=False,rect=False,rank=self.RANK, workers=8,
+                                image_weights=False,quad=False,prefix=colorstr('train: '))
 
         return trainloader,dataset
+
+
+if __name__ == '__main__':
+    print('running this file')
+    a = CreateDataloader()
+    trainloader,_ = a.get_dataloader()

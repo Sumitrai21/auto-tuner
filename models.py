@@ -29,4 +29,4 @@ def load_model(cfg):
     return model
 
 
-print(load_model())
+#print(load_model())

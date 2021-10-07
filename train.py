@@ -2,7 +2,7 @@ import os
 import shutil
 import torch
 import torch.nn as nn
-from torch.optim import optim
+import torch.optim as optim
 
 from utils.general import labels_to_class_weights, increment_path, labels_to_image_weights, init_seeds, \
     strip_optimizer, get_latest_run, check_dataset, check_file, check_git_status, check_img_size, \
