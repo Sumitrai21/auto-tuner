@@ -21,7 +21,7 @@ class Train():
         self.model = model
         self.nbs = 64
         self.optimizer = None
-        self.hyp = None
+        self.hyp = 'data/hyps/hyp.scratch.yaml'
         self.scheduler = None
         self.scaler = amp.Gradscaler(enabled=cuda)
         self.compute_loss = ComputeLoss(model)
@@ -30,6 +30,15 @@ class Train():
 
 
     def get_optimizer(self):
+        pg0, pg1, pg2 = [], [], []  # optimizer parameter groups
+        for k, v in self.model.named_modules():
+            if hasattr(v, 'bias') and isinstance(v.bias, nn.Parameter):
+                pg2.append(v.bias)  # biases
+            if isinstance(v, nn.BatchNorm2d):
+                pg0.append(v.weight)  # no decay
+            elif hasattr(v, 'weight') and isinstance(v.weight, nn.Parameter):
+                pg1.append(v.weight)  # apply decay
+
         if self.cfg.Training.adam:
             self.optimizer = optim.Adam(pg0, lr=self.hyp['lr0'], betas=(self.hyp['momentum'], 0.999))
 
@@ -41,7 +50,7 @@ class Train():
             lf = lambda x: (1 - x / (self.cfg.Training.epochs - 1)) * (1.0 - self.hyp['lrf']) + self.hyp['lrf']  # linear
 
         else:
-            lf = one_cycle(1, hyp['lrf'], self.cfg.Training.epochs)
+            lf = one_cycle(1, self.hyp['lrf'], self.cfg.Training.epochs)
 
         if self.optimizer:
             self.scheduler = lr_scheduler.LambdaLR(self.optimizer, lr_lambda=lf)
@@ -62,6 +71,7 @@ class Train():
         accumulate = max(round(self.nbs/self.cfg.Training.batch_size))
         self.get_optimizer()
         self.get_scheduler()
+        nb= len(self.trainloader)
 
         for epoch in range(self.start_epoch,self.cfg.Training.epochs):
             self.model.train()
@@ -72,11 +82,12 @@ class Train():
             pbar = enumerate(self.trainloader)
             self.optimizer.zero_grad()
             for i,(imgs,targets,paths,_) in pbar:
+
                 ni = i+nb*epoch
                 imgs = imgs.to(self.device,non_blocking=True)
 
                 #forward
-                with amp.autocast(enabled=cuda):
+                with amp.autocast(enabled=True):
                     pred = self.model(imgs)
                     loss,loss_item = self.compute_loss(pred,targets.to(self.device))
                     if self.cfg.Trainining.quad:
