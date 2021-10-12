@@ -27,7 +27,7 @@ class GetModel():
             pass
 
         else:
-            self.model = mlflow.pytorch.load_model(model_uri=f"models:/{self.model_name}/{self.model_version}")
+            model = mlflow.pytorch.load_model(model_uri=f"models:/{self.model_name}/{self.model_version}")
         
         self.model = torch.hub.load(os.getcwd(),'custom',path=f'{self.cfg.Detection.weights}.pt',source='local',force_reload=True)
         print(f"Yolo {self.model_name}/{self.model_version} loaded...")

@@ -23,8 +23,9 @@ class CreateDataset():
 
     def locate_file(self,i):
         if i.split('.'[-1]) == 'txt':
-            src_path = self.path+"/"+'i' #os.path.join()
-            new_path = self.dst_path+'/'+'labels'+'/'+i
+            src_path = os.path.join(self.path,i)
+
+            new_path = os.path.join(self.dst,'labels',i)
             shutil.move(src_path,new_path)
 
         elif i.split('.')[-1] == '.jpg':

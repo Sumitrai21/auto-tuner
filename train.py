@@ -23,14 +23,15 @@ class Train():
         self.optimizer = None
         self.hyp = 'data/hyps/hyp.scratch.yaml'
         self.scheduler = None
-        self.scaler = amp.Gradscaler(enabled=cuda)
+        self.scaler = amp.Gradscaler(enabled=True)
         self.compute_loss = ComputeLoss(model)
         self.RANK = RANK
         self.device = self.cfg.Training.device
 
 
     def get_optimizer(self):
-        pg0, pg1, pg2 = [], [], []  # optimizer parameter groups
+        pg0, p
+        g1, pg2 = [], [], []  # optimizer parameter groups
         for k, v in self.model.named_modules():
             if hasattr(v, 'bias') and isinstance(v.bias, nn.Parameter):
                 pg2.append(v.bias)  # biases

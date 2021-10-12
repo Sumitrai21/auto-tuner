@@ -52,40 +52,27 @@ from train import Train
 
 RANK = int(os.getenv('RANK', -1))
 
-def load_model(cfg):
-    ML_FLOW_URL = cfg.Mlflow.mlflow_url
-    mlflow.set_tracking_uri(ML_FLOW_URL)
-    model_name = cfg.Mlflow.model_name
-    model_version = cfg.Mlflow.model_version
-    if os.path.isfile(f'{cfg.Detection.weights}.pt'):
-        pass
-
-    else:
-        model = mlflow.pytorch.load_model(model_uri=f"models:/{model_name}/{model_version}")
-        torch.save(model,f'{cfg.Detection.weights_savename}.pt')
-
-
-    model = torch.hub.load(os.getcwd(), 'custom', path=f'{cfg.Detection.weights}.pt', source='local', force_reload = True)
-    print('model loaded')
-    return model
 
 def run():
     print('Inside runner file')
+    #config file
     cfg = liteconfig.Config('config.ini')
     #check new data
     check_data = CreateDataset(cfg)
     if check_data.check_new_data():
-        print('HERE')
         print('New data. Data will be added to the training folder')
         
+        #loading the data
         dataloader = CreateDataloader(cfg)
         trainloader,dataset = dataloader.get_dataloader()
         print('Data loaded Successfully')
         
+        #loading the model
         model = GetModel(cfg)
         model.load_model()
         print('Model Loaded')
-        print(model.model)
+
+        #Training
         trainer = Train(cfg,trainloader=trainloader,model=model.model,RANK=RANK)
         trainer.begin_training()
 
